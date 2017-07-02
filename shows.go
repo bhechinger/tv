@@ -67,5 +67,6 @@ func main() {
 		if err := mydb.AddShow(*addName, *addSeason, *addEpisode); err != nil {
 			fmt.Printf("Something went wrong Adding Show: %s\n", err)
 		}
+		os.Exit(0)
 	}
 }
