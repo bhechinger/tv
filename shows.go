@@ -20,6 +20,9 @@ func main() {
 
 	addCommand := flag.NewFlagSet("add", flag.ExitOnError)
 	addConfigFile := addCommand.String("config", defaultconfig, "Config file to use (Default: "+defaultconfig+")")
+	addName := addCommand.String("name", "", "Show name to add")
+	addSeason := addCommand.String("season", "", "Show season to add")
+	addEpisode := addCommand.String("episode", "", "Show episode to add")
 
 	switch os.Args[1] {
 	case "list":
@@ -58,5 +61,11 @@ func main() {
 			fmt.Printf("%v S%02dE%02d\n", v.Name, v.Season, v.Episode)
 		}
 		os.Exit(0)
+	}
+
+	if addCommand.Parsed() {
+		if err := mydb.AddShow(*addName, *addSeason, *addEpisode); err != nil {
+			fmt.Printf("Something went wrong Adding Show: %s\n", err)
+		}
 	}
 }

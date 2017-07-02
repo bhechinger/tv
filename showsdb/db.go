@@ -67,3 +67,10 @@ func (db *DBInfo) ListShows() ([]Shows, error) {
 
 	return shows, nil
 }
+
+func (db *DBInfo) AddShow(name string, season string, episode string) error {
+	// TODO: actually do something
+	//stmt, err := db.Conn.PrepareNamed("")
+	//s := Shows{Name: name, Season: season, Episode: episode}
+	return nil
+}
