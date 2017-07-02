@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"github.com/bhechinger/tv/config"
 	"github.com/bhechinger/tv/showsdb"
 	"os"
@@ -16,10 +16,10 @@ func main() {
 	defaultconfig := config.UserHomeDir() + "/.tv/shows.conf"
 
 	listCommand := flag.NewFlagSet("list", flag.ExitOnError)
-	listConfigFile := listCommand.String("config", defaultconfig, "Config file to use (Default: " + defaultconfig + ")")
+	listConfigFile := listCommand.String("config", defaultconfig, "Config file to use (Default: "+defaultconfig+")")
 
 	addCommand := flag.NewFlagSet("add", flag.ExitOnError)
-	addConfigFile := addCommand.String("config", defaultconfig, "Config file to use (Default: " + defaultconfig + ")")
+	addConfigFile := addCommand.String("config", defaultconfig, "Config file to use (Default: "+defaultconfig+")")
 
 	switch os.Args[1] {
 	case "list":
