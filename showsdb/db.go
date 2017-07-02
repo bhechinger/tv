@@ -56,19 +56,14 @@ func (db *DBInfo) Ping(timeout int) error {
 	}
 }
 
-func (db *DBInfo) ListShows() error {
-	stmt, err := db.Conn.PrepareNamed("SELECT shows.name, episodes.season, episodes.episode, shows.active" +
-		"FROM episodes LEFT JOIN shows ON episodes.show=shows.id" +
-		"WHERE shows.active = :active")
-
+func (db *DBInfo) ListShows() ([]Shows, error) {
+	stmt, err := db.Conn.PrepareNamed("SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name")
 	s := Shows{Active: true}
 	shows := []Shows{}
 
 	if err = stmt.Select(&shows, s); err != nil {
-		return fmt.Errorf("Error selecting shows/seasons: %s", err)
+		return shows, fmt.Errorf("Error selecting shows/seasons: %s", err)
 	}
 
-	fmt.Printf("%+v\n", shows)
-
-	return nil
+	return shows, nil
 }
