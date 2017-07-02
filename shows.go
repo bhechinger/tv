@@ -57,5 +57,6 @@ func main() {
 		for _, v := range shows {
 			fmt.Printf("%v S%02dE%02d\n", v.Name, v.Season, v.Episode)
 		}
+		os.Exit(0)
 	}
 }
