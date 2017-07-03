@@ -24,6 +24,10 @@ func main() {
 	addSeason := addCommand.String("season", "", "Show season to add")
 	addEpisode := addCommand.String("episode", "", "Show episode to add")
 
+	getCommand := flag.NewFlagSet("get", flag.ExitOnError)
+	getConfigFile := getCommand.String("config", defaultconfig, "Config file to use (Default: "+defaultconfig+")")
+	getName := getCommand.String("name", "", "Show name to get")
+
 	switch os.Args[1] {
 	case "list":
 		listCommand.Parse(os.Args[2:])
@@ -31,6 +35,9 @@ func main() {
 	case "add":
 		addCommand.Parse(os.Args[2:])
 		conf, err = config.Get(*addConfigFile)
+	case "get":
+		getCommand.Parse(os.Args[2:])
+		conf, err = config.Get(*getConfigFile)
 	default:
 		fmt.Printf("%q is not a valid command.\n", os.Args[1])
 		os.Exit(2)
@@ -67,6 +74,20 @@ func main() {
 		if err := mydb.AddShow(*addName, *addSeason, *addEpisode); err != nil {
 			fmt.Printf("Something went wrong Adding Show: %s\n", err)
 		}
+		os.Exit(0)
+	}
+
+	if getCommand.Parsed() {
+		exists, err := mydb.GetShow(*getName)
+		if err != nil {
+			fmt.Printf("Something went wrong Getting Show: %s\n", err)
+		}
+		if exists {
+			fmt.Printf("%s exists in the database", *getName)
+		} else {
+			fmt.Printf("%s does not exist in the database", *getName)
+		}
+
 		os.Exit(0)
 	}
 }

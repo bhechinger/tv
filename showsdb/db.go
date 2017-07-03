@@ -74,3 +74,35 @@ func (db *DBInfo) AddShow(name string, season string, episode string) error {
 	//s := Shows{Name: name, Season: season, Episode: episode}
 	return nil
 }
+
+func (db *DBInfo) RemoveShow(name string) error {
+	s := Shows{Name: name}
+	if _, err := db.Conn.NamedExec("DELETE FROM episodes WHERE show = (SELECT id FROM shows WHERE name = :name)", s); err != nil {
+		return fmt.Errorf("Error deleting shows from episide table: %s", err)
+	}
+
+	if _, err := db.Conn.NamedExec("DELETE FROM shows WHERE name = :name", s); err != nil {
+		return fmt.Errorf("Error deleting shows from shows table: %s", err)
+	}
+
+	return nil
+}
+
+func (db *DBInfo) GetShow(name string) (bool, error) {
+	shows := []Shows{}
+	if err := db.Conn.Select(&shows, "SELECT name, active FROM shows"); err != nil {
+		return false, err
+	}
+
+	for _, v := range shows {
+		if name == v.Name {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+//func (db *DBInfo) HaveEpisode(name string, season, episode int) (bool, error) {
+//
+//}
