@@ -11,6 +11,10 @@ import (
 )
 
 type Query struct {
+	channel Channel
+}
+
+type Channel struct {
 	ItemList []Item `xml:"item"`
 }
 
@@ -50,7 +54,7 @@ func main() {
 	var q Query
 	xml.Unmarshal(body, &q)
 
-	for _, item := range q.ItemList {
+	for _, item := range q.channel.ItemList {
 		fmt.Printf("\t%s\n", item)
 	}
 }
