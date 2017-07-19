@@ -9,6 +9,12 @@ import (
 
 type Config struct {
 	Database DB
+	RSSFeed RSS
+}
+
+type RSS struct {
+	BaseURL string
+	Key string
 }
 
 type DB struct {
