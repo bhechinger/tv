@@ -14,6 +14,7 @@ type Config struct {
 type DB struct {
 	User     string
 	Host     string
+	Port     string
 	Password string
 	DBName   string
 	SSLMode  string
