@@ -10,11 +10,23 @@ import (
 type Config struct {
 	Database DB
 	RSSFeed RSS
+	Options Options
+	Transmission Transmission
 }
 
 type RSS struct {
 	BaseURL string
 	Key string
+}
+
+type Options struct {
+	Prefer string
+}
+
+type Transmission struct {
+	URI      string
+	Username string
+	Password string
 }
 
 type DB struct {
