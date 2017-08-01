@@ -10,6 +10,7 @@ import (
 	"encoding/xml"
 	"github.com/bhechinger/tv/showsdb"
 	"regexp"
+	"strconv"
 )
 
 type Query struct {
@@ -80,25 +81,44 @@ func main() {
 
 	for _, item := range q.Channel.ItemList {
 		for _, show := range shows {
-			re := regexp.MustCompile(fmt.Sprintf("^%s S([0-9][0-9])E([0-9][0-9])", show.Name))
-			out := re.FindString(item.Title)
-			if out != "" {
-				fmt.Printf("%+v\n", out)
-				fmt.Printf("%s: %s\n", item.Title, item.Link)
+			re := regexp.MustCompile(fmt.Sprintf("^%s S(?P<season>[0-9][0-9])E(?P<episode>[0-9][0-9])", show.Name))
+			n1 := re.SubexpNames()
+			r2 := re.FindAllStringSubmatch(item.Title, -1)
 
-				//addCommand, err := transmission.NewAddCmdByURL(item.Link)
-				//if err != nil {
-				//	fmt.Printf("Something went wrong creating the addCommand: %s\n", err)
-				//	continue
-				//}
+			if len(r2) > 0 {
+				md := map[string]string{}
+				for i, n := range r2[0] {
+					md[n1[i]] = n
+				}
+				season, err := strconv.Atoi(md["season"])
+				if err != nil {
+					fmt.Printf("Something went wrong: %v\n", err)
+				}
+				episode, err := strconv.Atoi(md["episode"])
+				if err != nil {
+					fmt.Printf("Something went wrong: %v\n", err)
+				}
+				fmt.Printf("The season is %d\nThe episode is %d\n", season, episode)
 
-				//result, err := client.ExecuteAddCommand(addCommand)
-				//if err != nil {
-				//	fmt.Printf("Something went wrong adding the torrent: %s\n", err)
-				//	continue
-				//}
+				added, err := mydb.AddShow(show.Name, season, episode, true)
+				if err != nil {
+					fmt.Printf("Something went wrong: %v\n", err)
+				}
+				if added == 1 {
+					addCommand, err := transmission.NewAddCmdByURL(item.Link)
+					if err != nil {
+						fmt.Printf("Something went wrong creating the addCommand: %s\n", err)
+						continue
+					}
 
-				//fmt.Printf("Added Torrent: %s\n", result.Name)
+					result, err := client.ExecuteAddCommand(addCommand)
+					if err != nil {
+						fmt.Printf("Something went wrong adding the torrent: %s\n", err)
+						continue
+					}
+
+					fmt.Printf("Added Torrent: %s\n", result.Name)
+				}
 			}
 		}
 	}
