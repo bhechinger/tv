@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"encoding/xml"
 	"github.com/bhechinger/tv/showsdb"
+	"github.com/tubbebubbe/transmission"
 	"regexp"
 	"strconv"
 )
@@ -77,7 +78,7 @@ func main() {
 	var q Query
 	xml.Unmarshal(body, &q)
 
-	//client := transmission.New(conf.Transmission.URI, conf.Transmission.Username, conf.Transmission.Password)
+	client := transmission.New(conf.Transmission.URI, conf.Transmission.Username, conf.Transmission.Password)
 
 	for _, item := range q.Channel.ItemList {
 		for _, show := range shows {

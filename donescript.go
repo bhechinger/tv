@@ -15,6 +15,7 @@ func main() {
 
 	f, err := os.OpenFile("/tmp/TR_OUT.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
+		fmt.Printf("Error opening file: %s", err)
 		panic(err)
 	}
 
@@ -27,7 +28,13 @@ func main() {
 	torrent_id := os.Getenv("TR_TORRENT_ID")
 	torrent_name := os.Getenv("TR_TORRENT_NAME")
 
-	output := fmt.Sprintf("Environment:\n\tTR_APP_VERSION: %s\n\tTR_TIME_LOCALTIME: %s\n\tTR_TORRENT_DIR: %s\n\tTR_TORRENT_HASH: %s\n\tTR_TORRENT_ID: %s\n\tTR_TORRENT_NAME: %s\n\n",
+	output := fmt.Sprintf("Environment:\n" +
+		"\tTR_APP_VERSION: %s\n" +
+		"\tTR_TIME_LOCALTIME: %s\n" +
+		"\tTR_TORRENT_DIR: %s\n" +
+		"\tTR_TORRENT_HASH: %s\n" +
+		"\tTR_TORRENT_ID: %s\n" +
+		"\tTR_TORRENT_NAME: %s\n\n",
 		app_version,
 		time_localtime,
 		torrent_dir,
@@ -36,6 +43,7 @@ func main() {
 		torrent_name)
 
 	if _, err = f.WriteString(output); err != nil {
+		fmt.Printf("Error writing string: %s", err)
 		panic(err)
 	}
 
@@ -43,6 +51,14 @@ func main() {
 	var glob_output []string
 
 	if glob_output, err = filepath.Glob(fmt.Sprintf("%s/%s/*.rar", torrent_dir, torrent_name)); err != nil {
+		if _, err = f.WriteString(fmt.Sprintf("Error globbing filename: %s", err)); err != nil{
+			fmt.Printf("Error writing string: %s", err)
+		}
+		panic(err)
+	}
+
+	if _, err = f.WriteString(fmt.Sprintf("glob: %+v", glob_output)); err != nil{
+		fmt.Printf("Error writing string: %s", err)
 		panic(err)
 	}
 
@@ -55,6 +71,7 @@ func main() {
 	}
 
 	if _, err = f.WriteString(exist_output); err != nil{
+		fmt.Printf("Error writing string: %s", err)
 		panic(err)
 	}
 }
