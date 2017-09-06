@@ -51,10 +51,9 @@ func main() {
 
 	var glob []string
 
-	dest_dir := get_dest(torrent_name)
-
 	glob = get_glob("rar")
 	if len(glob) > 0 {
+		dest_dir := get_dest(filepath.Base(glob[0]))
 		_, err = f.WriteString(fmt.Sprintf("uncompressing '%+v' to '%s'\n", glob[0], dest_dir))
 		if err != nil {
 			panic(err)
@@ -79,6 +78,7 @@ func main() {
 		glob = get_glob(v)
 		if len(glob) > 0 {
 			for _, v := range glob {
+				dest_dir := get_dest(filepath.Base(v))
 				_, err = f.WriteString(fmt.Sprintf("copying '%+v' to '%s'\n", v, dest_dir))
 				if err != nil {
 					panic(err)
