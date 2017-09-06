@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	unarr "github.com/gen2brain/go-unarr"
+	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 )
 
 func main() {
@@ -28,12 +31,12 @@ func main() {
 	torrent_id := os.Getenv("TR_TORRENT_ID")
 	torrent_name := os.Getenv("TR_TORRENT_NAME")
 
-	output := fmt.Sprintf("Environment:\n" +
-		"\tTR_APP_VERSION: %s\n" +
-		"\tTR_TIME_LOCALTIME: %s\n" +
-		"\tTR_TORRENT_DIR: %s\n" +
-		"\tTR_TORRENT_HASH: %s\n" +
-		"\tTR_TORRENT_ID: %s\n" +
+	output := fmt.Sprintf("Environment:\n"+
+		"\tTR_APP_VERSION: %s\n"+
+		"\tTR_TIME_LOCALTIME: %s\n"+
+		"\tTR_TORRENT_DIR: %s\n"+
+		"\tTR_TORRENT_HASH: %s\n"+
+		"\tTR_TORRENT_ID: %s\n"+
 		"\tTR_TORRENT_NAME: %s\n\n",
 		app_version,
 		time_localtime,
@@ -43,35 +46,93 @@ func main() {
 		torrent_name)
 
 	if _, err = f.WriteString(output); err != nil {
-		fmt.Printf("Error writing string: %s", err)
 		panic(err)
 	}
 
-	var exist_output string
-	var glob_output []string
+	var glob []string
 
-	if glob_output, err = filepath.Glob(fmt.Sprintf("%s/%s/*.rar", torrent_dir, torrent_name)); err != nil {
-		if _, err = f.WriteString(fmt.Sprintf("Error globbing filename: %s", err)); err != nil{
-			fmt.Printf("Error writing string: %s", err)
+	dest_dir := get_dest(torrent_name)
+
+	glob = get_glob("rar")
+	if len(glob) > 0 {
+		_, err = f.WriteString(fmt.Sprintf("uncompressing '%+v' to '%s'\n", glob[0], dest_dir))
+		if err != nil {
+			panic(err)
 		}
-		panic(err)
-	}
 
-	if _, err = f.WriteString(fmt.Sprintf("glob: %+v", glob_output)); err != nil{
-		fmt.Printf("Error writing string: %s", err)
-		panic(err)
-	}
+		a, err := unarr.NewArchive(glob[0])
+		if err != nil {
+			panic(err)
+		}
 
-	if _, err = os.Stat(glob_output[0]); err != nil {
-		if os.IsNotExist(err) {
-			exist_output = "\tFile doesn't exist\n"
-		} else {
-			exist_output = "\tFile exists\n"
+		defer a.Close()
+
+		err = a.Extract(dest_dir)
+		if err != nil {
+			panic(err)
 		}
 	}
 
-	if _, err = f.WriteString(exist_output); err != nil{
-		fmt.Printf("Error writing string: %s", err)
+	ext_list := [...]string{"mkv", "avi", "mpg", "mp4"}
+
+	for _, v := range ext_list {
+		glob = get_glob(v)
+		if len(glob) > 0 {
+			for _, v := range glob {
+				_, err = f.WriteString(fmt.Sprintf("copying '%+v' to '%s'\n", v, dest_dir))
+				if err != nil {
+					panic(err)
+				}
+
+				in, err := os.Open(v)
+				if err != nil {
+					panic(err)
+				}
+				defer in.Close()
+
+				out, err := os.Create(fmt.Sprintf("%s/%s", dest_dir, filepath.Base(v)))
+				if err != nil {
+					panic(err)
+				}
+				defer out.Close()
+
+				_, err = io.Copy(out, in)
+				cerr := out.Close()
+				if err != nil {
+					panic(err)
+				}
+				fmt.Sprintf("cerr: %+v\n", cerr)
+			}
+		}
+
+	}
+
+}
+
+func get_dest(name string) string {
+	matched, err := regexp.MatchString(`S\d{2}E\d{2}`, name)
+	if err != nil {
 		panic(err)
 	}
+
+	if matched {
+		return "/tank/Plex/TV/1New/"
+	} else {
+		return "/tank/Plex/Movies/"
+	}
+
+}
+
+func get_glob(ext string) []string {
+	glob_output, err := filepath.Glob(
+		fmt.Sprintf("%s/%s/*.%s",
+			os.Getenv("TR_TORRENT_DIR"),
+			os.Getenv("TR_TORRENT_NAME"),
+			ext))
+
+	if err != nil {
+		panic(err)
+	}
+
+	return glob_output
 }
