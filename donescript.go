@@ -11,11 +11,6 @@ import (
 
 func main() {
 
-	// To set a key/value pair, use `os.Setenv`. To get a
-	// value for a key, use `os.Getenv`. This will return
-	// an empty string if the key isn't present in the
-	// environment.
-
 	f, err := os.OpenFile("/tmp/TR_OUT.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		fmt.Printf("Error opening file: %s", err)
@@ -74,23 +69,23 @@ func main() {
 
 	ext_list := [...]string{"mkv", "avi", "mpg", "mp4"}
 
-	for _, v := range ext_list {
-		glob = get_glob(v)
+	for _, ext := range ext_list {
+		glob = get_glob(ext)
 		if len(glob) > 0 {
-			for _, v := range glob {
-				dest_dir := get_dest(filepath.Base(v))
-				_, err = f.WriteString(fmt.Sprintf("copying '%+v' to '%s'\n", v, dest_dir))
+			for _, srcname := range glob {
+				dest_dir := get_dest(filepath.Base(srcname))
+				_, err = f.WriteString(fmt.Sprintf("copying '%+v' to '%s'\n", srcname, dest_dir))
 				if err != nil {
 					panic(err)
 				}
 
-				in, err := os.Open(v)
+				in, err := os.Open(srcname)
 				if err != nil {
 					panic(err)
 				}
 				defer in.Close()
 
-				out, err := os.Create(fmt.Sprintf("%s/%s", dest_dir, filepath.Base(v)))
+				out, err := os.Create(fmt.Sprintf("%s/%s", dest_dir, filepath.Base(srcname)))
 				if err != nil {
 					panic(err)
 				}
