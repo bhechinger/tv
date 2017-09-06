@@ -105,7 +105,7 @@ func main() {
 }
 
 func get_dest(name string) string {
-	matched, err := regexp.MatchString(`S\d{2}E\d{2}`, name)
+	matched, err := regexp.MatchString(`[Ss]\d{2}[Ee]\d{2}`, name)
 	if err != nil {
 		panic(err)
 	}
