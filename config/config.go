@@ -8,15 +8,17 @@ import (
 )
 
 type Config struct {
-	Database DB
-	RSSFeed RSS
-	Options Options
+	Database     DB
+	RSSFeed      RSS
+	Options      Options
 	Transmission Transmission
+	EMail        EMail
+	Donescript   Donescript
 }
 
 type RSS struct {
 	BaseURL string
-	Key string
+	Key     string
 }
 
 type Options struct {
@@ -36,6 +38,19 @@ type DB struct {
 	Password string
 	DBName   string
 	SSLMode  string
+}
+
+type EMail struct {
+	Username      string
+	Password      string
+	Server        string
+	Port          int
+	From          string
+	RecipientList string
+}
+
+type Donescript struct {
+	LogFile string
 }
 
 func UserHomeDir() string {
