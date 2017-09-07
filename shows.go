@@ -33,6 +33,7 @@ func main() {
 	removeConfigFile := removeCommand.String("config", defaultconfig, "Config file to use (Default: "+defaultconfig+")")
 	removeName := removeCommand.String("name", "", "Show to remvoe")
 
+	// TODO: error handling for no command line arguments
 	switch os.Args[1] {
 	case "list":
 		listCommand.Parse(os.Args[2:])
