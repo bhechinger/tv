@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"gopkg.in/gomail.v2"
+	"strings"
 )
 
 func main() {
@@ -151,9 +152,15 @@ func get_glob(ext string) []string {
 }
 
 func send_mail(subject, body string, conf config.Config) {
+	var recipient_list []string
+
+	for _, recipient := range strings.Split(conf.EMail.RecipientList, ",") {
+		recipient_list = append(recipient_list, recipient)
+	}
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", conf.EMail.From)
-	m.SetHeader("To", conf.EMail.RecipientList)
+	m.SetHeader("To", recipient_list...)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
