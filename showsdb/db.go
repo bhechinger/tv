@@ -109,6 +109,7 @@ func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (int, 
 			if _, err := db.Conn.NamedExec("INSERT INTO episodes (show, season, episode) VALUES ((SELECT id FROM shows WHERE name = :name), :season, :episode)", sh); err != nil {
 				return added, fmt.Errorf("Error Inserting seasons: %s", err)
 			}
+			added++
 		}
 	}
 
