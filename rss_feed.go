@@ -56,7 +56,7 @@ func main() {
 	defer f.Close()
 
 	log.SetOutput(f)
-	log.Println("Running rss_feed: timestamp")
+	log.Println("Running rss_feed")
 
 	if err = mydb.Init("postgres", conf); err != nil {
 		log.Printf("Something went wrong Initializing DB Connection: %s\n", err)
@@ -111,7 +111,7 @@ func main() {
 				if err != nil {
 					log.Printf("Something went wrong: %v\n", err)
 				}
-				log.Printf("The season is %d -- The episode is %d\n", season, episode)
+				log.Printf("Checking %s S%dE%d\n", show.Name, season, episode)
 
 				added, err := mydb.AddShow(show.Name, season, episode, true)
 				if err != nil {
