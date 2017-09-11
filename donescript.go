@@ -55,10 +55,7 @@ func main() {
 		torrent_id,
 		torrent_name)
 
-	if _, err = f.WriteString(output); err != nil {
-		log.Printf("f.WriteString() error: %v", err)
-		os.Exit(1)
-	}
+	log.Println(output)
 
 	var glob []string
 
