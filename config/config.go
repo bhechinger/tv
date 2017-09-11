@@ -21,6 +21,7 @@ type Config struct {
 }
 
 type RSS struct {
+	LogFile string
 	BaseURL string
 	Key     string
 }

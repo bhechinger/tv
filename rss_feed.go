@@ -12,6 +12,7 @@ import (
 	"github.com/tubbebubbe/transmission"
 	"regexp"
 	"strconv"
+	"log"
 )
 
 type Query struct {
@@ -46,32 +47,43 @@ func main() {
 		os.Exit(3)
 	}
 
+	f, err := os.OpenFile(conf.RSSFeed.LogFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		log.Printf("os.OpenFile(): Error opening file: %s", err)
+		os.Exit(4)
+	}
+
+	defer f.Close()
+
+	log.SetOutput(f)
+	log.Println("Running rss_feed: timestamp")
+
 	if err = mydb.Init("postgres", conf); err != nil {
-		fmt.Printf("Something went wrong Initializing DB Connection: %s\n", err)
+		log.Printf("Something went wrong Initializing DB Connection: %s\n", err)
 		os.Exit(3)
 	}
 
 	if err = mydb.Ping(5); err != nil {
-		fmt.Printf("Something went wrong Pinging DB: %s\n", err)
+		log.Printf("Something went wrong Pinging DB: %s\n", err)
 		os.Exit(3)
 	}
 
 	shows, err = mydb.ListShows()
 	if err != nil {
-		fmt.Printf("Something went wrong Listing Shows: %s\n", err)
+		log.Printf("Something went wrong Listing Shows: %s\n", err)
 		os.Exit(0)
 	}
 
 	resp, err := http.Get(conf.RSSFeed.BaseURL+"/"+conf.RSSFeed.Key)
 	if err != nil {
-		fmt.Printf("Something has gone terribly wrong connecting to the server: %s\n", err)
+		log.Printf("Something has gone terribly wrong connecting to the server: %s\n", err)
 		os.Exit(2)
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Something has gone quite wrong fetching the body content: %s\n", err)
+		log.Printf("Something has gone quite wrong fetching the body content: %s\n", err)
 		os.Exit(1)
 	}
 
@@ -82,7 +94,7 @@ func main() {
 
 	for _, item := range q.Channel.ItemList {
 		for _, show := range shows {
-			re := regexp.MustCompile(fmt.Sprintf("^%s S(?P<season>[0-9][0-9])E(?P<episode>[0-9][0-9])", show.Name))
+			re := regexp.MustCompile(fmt.Sprintf("^%s S(?P<season>[0-9]+)E(?P<episode>[0-9]+)", show.Name))
 			n1 := re.SubexpNames()
 			r2 := re.FindAllStringSubmatch(item.Title, -1)
 
@@ -93,32 +105,32 @@ func main() {
 				}
 				season, err := strconv.Atoi(md["season"])
 				if err != nil {
-					fmt.Printf("Something went wrong: %v\n", err)
+					log.Printf("Something went wrong: %v\n", err)
 				}
 				episode, err := strconv.Atoi(md["episode"])
 				if err != nil {
-					fmt.Printf("Something went wrong: %v\n", err)
+					log.Printf("Something went wrong: %v\n", err)
 				}
-				fmt.Printf("The season is %d\nThe episode is %d\n", season, episode)
+				log.Printf("The season is %d -- The episode is %d\n", season, episode)
 
 				added, err := mydb.AddShow(show.Name, season, episode, true)
 				if err != nil {
-					fmt.Printf("Something went wrong: %v\n", err)
+					log.Printf("Something went wrong: %v\n", err)
 				}
 				if added == 1 {
 					addCommand, err := transmission.NewAddCmdByURL(item.Link)
 					if err != nil {
-						fmt.Printf("Something went wrong creating the addCommand: %s\n", err)
+						log.Printf("Something went wrong creating the addCommand: %s\n", err)
 						continue
 					}
 
 					result, err := client.ExecuteAddCommand(addCommand)
 					if err != nil {
-						fmt.Printf("Something went wrong adding the torrent: %s\n", err)
+						log.Printf("Something went wrong adding the torrent: %s\n", err)
 						continue
 					}
 
-					fmt.Printf("Added Torrent: %s\n", result.Name)
+					log.Printf("Added Torrent: %s\n", result.Name)
 				}
 			}
 		}
