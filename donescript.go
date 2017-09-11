@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"gopkg.in/gomail.v2"
 	"strings"
+	"log"
 )
 
 func main() {
@@ -22,17 +23,19 @@ func main() {
 
 	conf, err := config.Get(*configFile)
 	if err != nil {
-		fmt.Printf("Something went wrong with the config file: %s\n", err)
+		log.Printf("config.Get(): Something went wrong with the config file: %s\n", err)
 		os.Exit(3)
 	}
 
 	f, err := os.OpenFile(conf.Donescript.LogFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
-		fmt.Printf("Error opening file: %s", err)
+		log.Printf("os.OpenFile(): Error opening file: %s", err)
 		os.Exit(4)
 	}
 
 	defer f.Close()
+
+	log.SetOutput(f)
 
 	app_version := os.Getenv("TR_APP_VERSION")
 	time_localtime := os.Getenv("TR_TIME_LOCALTIME")
@@ -56,7 +59,8 @@ func main() {
 		torrent_name)
 
 	if _, err = f.WriteString(output); err != nil {
-		panic(err)
+		log.Printf("f.WriteString() error: %v", err)
+		os.Exit(1)
 	}
 
 	var glob []string
@@ -64,24 +68,27 @@ func main() {
 	glob = get_glob("rar")
 	if len(glob) > 0 {
 		dest_dir := get_dest(filepath.Base(glob[0]))
-		msg := fmt.Sprintf("uncompressing '%+v' to '%s'\n", glob[0], dest_dir)
-		send_mail(fmt.Sprintf("%s downloaded!", torrent_name), msg, conf)
-		_, err = f.WriteString(msg)
-		if err != nil {
-			panic(err)
-		}
 
 		a, err := unarr.NewArchive(glob[0])
 		if err != nil {
-			panic(err)
+			log.Printf("unarr.NewArchive(): %v", err)
+			os.Exit(1)
 		}
 
 		defer a.Close()
 
 		err = a.Extract(dest_dir)
 		if err != nil {
-			panic(err)
+			log.Printf("a.Extract(): %v", err)
+			os.Exit(1)
 		}
+
+		msg := fmt.Sprintf("uncompressing '%+v' to '%s'\n", glob[0], dest_dir)
+		send_mail(fmt.Sprintf("%s downloaded!", torrent_name), msg, conf)
+		log.Println(msg)
+
+		// We're done
+		os.Exit(0)
 	}
 
 	ext_list := [...]string{"mkv", "avi", "mpg", "mp4"}
@@ -91,31 +98,30 @@ func main() {
 		if len(glob) > 0 {
 			for _, srcname := range glob {
 				dest_dir := get_dest(filepath.Base(srcname))
-				msg := fmt.Sprintf("copying '%+v' to '%s'\n", srcname, dest_dir)
-				send_mail(fmt.Sprintf("%s downloaded!", torrent_name), msg, conf)
-				_, err = f.WriteString(msg)
-				if err != nil {
-					panic(err)
-				}
 
 				in, err := os.Open(srcname)
 				if err != nil {
-					panic(err)
+					log.Printf("os.Open(): %v", err)
+					os.Exit(1)
 				}
 				defer in.Close()
 
 				out, err := os.Create(fmt.Sprintf("%s/%s", dest_dir, filepath.Base(srcname)))
 				if err != nil {
-					panic(err)
+					log.Printf("os.Create(): %v", err)
+					os.Exit(1)
 				}
 				defer out.Close()
 
 				_, err = io.Copy(out, in)
-				cerr := out.Close()
 				if err != nil {
-					panic(err)
+					log.Printf("is.Copy(): %v", err)
+					os.Exit(1)
 				}
-				fmt.Sprintf("cerr: %+v\n", cerr)
+
+				msg := fmt.Sprintf("copying '%+v' to '%s'\n", srcname, dest_dir)
+				send_mail(fmt.Sprintf("%s downloaded!", torrent_name), msg, conf)
+				log.Println(msg)
 			}
 		}
 
@@ -126,7 +132,8 @@ func main() {
 func get_dest(name string) string {
 	matched, err := regexp.MatchString(`[Ss]\d{2}[Ee]\d{2}`, name)
 	if err != nil {
-		panic(err)
+		log.Printf("regexp.MatchString(): %v", err)
+		os.Exit(1)
 	}
 
 	if matched {
@@ -145,7 +152,8 @@ func get_glob(ext string) []string {
 			ext))
 
 	if err != nil {
-		panic(err)
+		log.Printf("filepath.Glob(): %v", err)
+		os.Exit(1)
 	}
 
 	return glob_output
@@ -168,6 +176,7 @@ func send_mail(subject, body string, conf config.Config) {
 
 	// Send the email to Bob, Cora and Dan.
 	if err := d.DialAndSend(m); err != nil {
-		panic(err)
+		log.Printf("d.DialAndSend(): %v", err)
+		os.Exit(1)
 	}
 }
