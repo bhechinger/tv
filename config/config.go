@@ -2,9 +2,13 @@ package config
 
 import (
 	"github.com/BurntSushi/toml"
+	"gopkg.in/gomail.v2"
 	"io/ioutil"
+	"log"
 	"os"
+	"regexp"
 	"runtime"
+	"strings"
 )
 
 type Config struct {
@@ -50,7 +54,9 @@ type EMail struct {
 }
 
 type Donescript struct {
-	LogFile string
+	LogFile       string
+	TVLocation    string
+	MovieLocation string
 }
 
 func UserHomeDir() string {
@@ -77,4 +83,41 @@ func Get(filename string) (Config, error) {
 		return config, err
 	}
 	return config, nil
+}
+
+func (conf Config) Sendmail(subject, body string) {
+	var recipient_list []string
+
+	for _, recipient := range strings.Split(conf.EMail.RecipientList, ",") {
+		recipient_list = append(recipient_list, recipient)
+	}
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", conf.EMail.From)
+	m.SetHeader("To", recipient_list...)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", body)
+
+	d := gomail.NewDialer(conf.EMail.Server, conf.EMail.Port, conf.EMail.Username, conf.EMail.Password)
+
+	// Send the email to Bob, Cora and Dan.
+	if err := d.DialAndSend(m); err != nil {
+		log.Printf("d.DialAndSend(): %v", err)
+		os.Exit(1)
+	}
+}
+
+func (conf Config) GetDestination(name string) string {
+	matched, err := regexp.MatchString(`[Ss]\d{2}[Ee]\d{2}`, name)
+	if err != nil {
+		log.Printf("regexp.MatchString(): %v", err)
+		os.Exit(1)
+	}
+
+	if matched {
+		return conf.Donescript.TVLocation
+	} else {
+		return conf.Donescript.MovieLocation
+	}
+
 }

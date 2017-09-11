@@ -6,12 +6,9 @@ import (
 	"github.com/bhechinger/tv/config"
 	unarr "github.com/gen2brain/go-unarr"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
-	"regexp"
-	"gopkg.in/gomail.v2"
-	"strings"
-	"log"
 )
 
 func main() {
@@ -67,7 +64,7 @@ func main() {
 
 	glob = get_glob("rar")
 	if len(glob) > 0 {
-		dest_dir := get_dest(filepath.Base(glob[0]))
+		dest_dir := conf.GetDestination(filepath.Base(glob[0]))
 
 		a, err := unarr.NewArchive(glob[0])
 		if err != nil {
@@ -84,7 +81,7 @@ func main() {
 		}
 
 		msg := fmt.Sprintf("uncompressing '%+v' to '%s'\n", glob[0], dest_dir)
-		send_mail(fmt.Sprintf("%s downloaded!", torrent_name), msg, conf)
+		conf.Sendmail(fmt.Sprintf("%s downloaded!", torrent_name), msg)
 		log.Println(msg)
 
 		// We're done
@@ -97,7 +94,7 @@ func main() {
 		glob = get_glob(ext)
 		if len(glob) > 0 {
 			for _, srcname := range glob {
-				dest_dir := get_dest(filepath.Base(srcname))
+				dest_dir := conf.GetDestination(filepath.Base(srcname))
 
 				in, err := os.Open(srcname)
 				if err != nil {
@@ -120,26 +117,11 @@ func main() {
 				}
 
 				msg := fmt.Sprintf("copying '%+v' to '%s'\n", srcname, dest_dir)
-				send_mail(fmt.Sprintf("%s downloaded!", torrent_name), msg, conf)
+				conf.Sendmail(fmt.Sprintf("%s downloaded!", torrent_name), msg)
 				log.Println(msg)
 			}
 		}
 
-	}
-
-}
-
-func get_dest(name string) string {
-	matched, err := regexp.MatchString(`[Ss]\d{2}[Ee]\d{2}`, name)
-	if err != nil {
-		log.Printf("regexp.MatchString(): %v", err)
-		os.Exit(1)
-	}
-
-	if matched {
-		return "/tank/Plex/TV/1New/"
-	} else {
-		return "/tank/Plex/Movies/"
 	}
 
 }
@@ -157,26 +139,4 @@ func get_glob(ext string) []string {
 	}
 
 	return glob_output
-}
-
-func send_mail(subject, body string, conf config.Config) {
-	var recipient_list []string
-
-	for _, recipient := range strings.Split(conf.EMail.RecipientList, ",") {
-		recipient_list = append(recipient_list, recipient)
-	}
-
-	m := gomail.NewMessage()
-	m.SetHeader("From", conf.EMail.From)
-	m.SetHeader("To", recipient_list...)
-	m.SetHeader("Subject", subject)
-	m.SetBody("text/html", body)
-
-	d := gomail.NewDialer(conf.EMail.Server, conf.EMail.Port, conf.EMail.Username, conf.EMail.Password)
-
-	// Send the email to Bob, Cora and Dan.
-	if err := d.DialAndSend(m); err != nil {
-		log.Printf("d.DialAndSend(): %v", err)
-		os.Exit(1)
-	}
 }
