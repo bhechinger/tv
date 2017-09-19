@@ -4,11 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/bhechinger/tv/config"
-	unarr "github.com/gen2brain/go-unarr"
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"syscall"
 )
 
 func main() {
@@ -63,18 +64,18 @@ func main() {
 	if len(glob) > 0 {
 		dest_dir := conf.GetDestination(filepath.Base(glob[0]))
 
-		a, err := unarr.NewArchive(glob[0])
-		if err != nil {
-			log.Printf("unarr.NewArchive(): %v", err)
-			os.Exit(1)
+		binary, lookErr := exec.LookPath("unrar")
+		if lookErr != nil {
+			panic(lookErr)
 		}
 
-		defer a.Close()
+		args := []string{"unrar", "e", "-y", glob[0], dest_dir}
 
-		err = a.Extract(dest_dir)
-		if err != nil {
-			log.Printf("a.Extract(): %v", err)
-			os.Exit(1)
+		env := os.Environ()
+
+		execErr := syscall.Exec(binary, args, env)
+		if execErr != nil {
+			panic(execErr)
 		}
 
 		msg := fmt.Sprintf("uncompressing '%+v' to '%s'\n", glob[0], dest_dir)
