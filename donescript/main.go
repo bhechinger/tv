@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
 )
 
 func main() {
@@ -64,18 +63,15 @@ func main() {
 	if len(glob) > 0 {
 		dest_dir := conf.GetDestination(filepath.Base(glob[0]))
 
-		binary, lookErr := exec.LookPath("unrar")
-		if lookErr != nil {
-			panic(lookErr)
-		}
+		//binary, lookErr := exec.LookPath("unrar")
+		//if lookErr != nil {
+		//	panic(lookErr)
+		//}
 
-		args := []string{"unrar", "e", "-y", glob[0], dest_dir}
-
-		env := os.Environ()
-
-		execErr := syscall.Exec(binary, args, env)
-		if execErr != nil {
-			panic(execErr)
+		unrar := exec.Command("unrar", "e", "-y", glob[0], dest_dir)
+		_, err := unrar.Output()
+		if err != nil {
+			panic(err)
 		}
 
 		msg := fmt.Sprintf("uncompressing '%+v' to '%s'\n", glob[0], dest_dir)
