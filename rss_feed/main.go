@@ -98,6 +98,15 @@ func main() {
 			n1 := re.SubexpNames()
 			r2 := re.FindAllStringSubmatch(item.Title, -1)
 
+			french_re := regexp.MustCompile("[Ff][Rr][Ee][Nn][Cc][Hh]")
+			french := french_re.FindAllStringSubmatch(item.Title, -1)
+
+			if len(french) > 0 {
+				// The word french exists. Skipping.
+				log.Printf("Found the word french in the title. Le Skipping!")
+				continue
+			}
+
 			if len(r2) > 0 {
 				md := map[string]string{}
 				for i, n := range r2[0] {
