@@ -109,7 +109,4 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-# binaries
-donescript
-rss_feed
-shows
+
