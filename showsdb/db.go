@@ -99,12 +99,12 @@ func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (int, 
 	}
 
 	for s := 1; s <= season; s++ {
-		e_limit := MAXEPISODES
+		eLimit := MAXEPISODES
 		if s == season {
-			e_limit = episode
+			eLimit = episode
 		}
 
-		for e := 1; e <= e_limit; e++ {
+		for e := 1; e <= eLimit; e++ {
 			sh := Shows{Name: name, Season: s, Episode: e}
 			if _, err := db.Conn.NamedExec("INSERT INTO episodes (show, season, episode) VALUES ((SELECT id FROM shows WHERE name = :name), :season, :episode)", sh); err != nil {
 				return added, fmt.Errorf("Error Inserting seasons: %s", err)
@@ -123,7 +123,7 @@ func (db *DBInfo) RemoveShow(name string) (int64, error) {
 		return 0, fmt.Errorf("Error deleting shows from episide table: %s", err)
 	}
 
-	episodes_deleted, err := result.RowsAffected()
+	episodesDeleted, err := result.RowsAffected()
 	if err != nil {
 		return 0, fmt.Errorf("Error getting RowsAffected(): %s", err)
 	}
@@ -132,7 +132,7 @@ func (db *DBInfo) RemoveShow(name string) (int64, error) {
 		return 0, fmt.Errorf("Error deleting shows from shows table: %s", err)
 	}
 
-	return episodes_deleted, nil
+	return episodesDeleted, nil
 }
 
 func (db *DBInfo) GetShow(name string) (bool, error) {

@@ -98,8 +98,8 @@ func main() {
 			n1 := re.SubexpNames()
 			r2 := re.FindAllStringSubmatch(item.Title, -1)
 
-			french_re := regexp.MustCompile("[Ff][Rr][Ee][Nn][Cc][Hh]")
-			french := french_re.FindAllStringSubmatch(item.Title, -1)
+			frenchRE := regexp.MustCompile("[Ff][Rr][Ee][Nn][Cc][Hh]")
+			french := frenchRE.FindAllStringSubmatch(item.Title, -1)
 
 			if len(r2) > 0 {
 				md := map[string]string{}

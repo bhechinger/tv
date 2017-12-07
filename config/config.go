@@ -87,15 +87,15 @@ func Get(filename string) (Config, error) {
 }
 
 func (conf Config) Sendmail(subject, body string) {
-	var recipient_list []string
+	var recipientList []string
 
 	for _, recipient := range strings.Split(conf.EMail.RecipientList, ",") {
-		recipient_list = append(recipient_list, recipient)
+		recipientList = append(recipientList, recipient)
 	}
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", conf.EMail.From)
-	m.SetHeader("To", recipient_list...)
+	m.SetHeader("To", recipientList...)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
