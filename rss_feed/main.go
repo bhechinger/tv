@@ -1,18 +1,18 @@
 package main
 
 import (
-	"github.com/bhechinger/tv/config"
+	"encoding/xml"
 	"flag"
 	"fmt"
-	"os"
-	"net/http"
-	"io/ioutil"
-	"encoding/xml"
+	"github.com/bhechinger/tv/config"
 	"github.com/bhechinger/tv/showsdb"
 	"github.com/tubbebubbe/transmission"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
 	"regexp"
 	"strconv"
-	"log"
 )
 
 type Query struct {
@@ -24,8 +24,8 @@ type Channel struct {
 }
 
 type Item struct {
-	Title  string `xml:"title"`
-	Link   string `xml:"link"`
+	Title string `xml:"title"`
+	Link  string `xml:"link"`
 }
 
 func (i Item) String() string {
@@ -74,7 +74,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	resp, err := http.Get(conf.RSSFeed.BaseURL+"/"+conf.RSSFeed.Key)
+	resp, err := http.Get(conf.RSSFeed.BaseURL + "/" + conf.RSSFeed.Key)
 	if err != nil {
 		log.Printf("Something has gone terribly wrong connecting to the server: %s\n", err)
 		os.Exit(2)
@@ -101,31 +101,34 @@ func main() {
 			french_re := regexp.MustCompile("[Ff][Rr][Ee][Nn][Cc][Hh]")
 			french := french_re.FindAllStringSubmatch(item.Title, -1)
 
-			if len(french) > 0 {
-				// The word french exists. Skipping.
-				log.Printf("Found the word french in the title. Le Skipping!")
-				continue
-			}
-
 			if len(r2) > 0 {
 				md := map[string]string{}
 				for i, n := range r2[0] {
 					md[n1[i]] = n
 				}
+
 				season, err := strconv.Atoi(md["season"])
 				if err != nil {
 					log.Printf("Something went wrong: %v\n", err)
 				}
+
 				episode, err := strconv.Atoi(md["episode"])
 				if err != nil {
 					log.Printf("Something went wrong: %v\n", err)
 				}
-				log.Printf("Checking %s S%dE%d\n", show.Name, season, episode)
 
+				if len(french) > 0 {
+					// The word french exists. Skipping.
+					log.Printf("Le Skipping %s S%dE%d\n", show.Name, season, episode)
+					continue
+				}
+
+				log.Printf("Checking %s S%dE%d\n", show.Name, season, episode)
 				added, err := mydb.AddShow(show.Name, season, episode, true)
 				if err != nil {
 					log.Printf("Something went wrong: %v\n", err)
 				}
+
 				if added == 1 {
 					addCommand, err := transmission.NewAddCmdByURL(item.Link)
 					if err != nil {
