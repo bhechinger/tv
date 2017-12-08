@@ -29,6 +29,11 @@ type Shows struct {
 	Active  bool
 }
 
+var queries = map[string]string{
+	"ListShows": "SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name",
+	"AddShow":   "CM",
+}
+
 func (db *DBInfo) Init(driver string, config config.Config) error {
 	var err error
 	db.Driver = driver
@@ -60,7 +65,7 @@ func (db *DBInfo) Ping(timeout int) error {
 }
 
 func (db *DBInfo) ListShows() ([]Shows, error) {
-	stmt, err := db.Conn.PrepareNamed("SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name")
+	stmt, err := db.Conn.PrepareNamed(queries["ListShows"])
 	s := Shows{Active: true}
 	shows := []Shows{}
 
