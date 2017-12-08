@@ -13,9 +13,13 @@ func TestDatabase(t *testing.T) {
 
 		So(mydb.Init("postgres", conf), ShouldBeNil)
 		So(mydb.Ping(5), ShouldBeNil)
-		//shows, err := mydb.ListShows()
-		//So(err, ShouldBeNil)
-		//So(shows, ShouldBeEmpty)
+		Convey("Test ListShows()", func(){
+			shows, err := mydb.ListShows()
+			So(err, ShouldBeNil)
+			So(shows[0].Name, ShouldEqual, "Test Show 1")
+			So(shows[1].Name, ShouldEqual, "Test Show 2")
+			So(shows[2].Name, ShouldEqual, "Test Show 3")
+		})
 
 	})
 }
