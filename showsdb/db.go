@@ -30,8 +30,10 @@ type Shows struct {
 }
 
 var queries = map[string]string{
-	"ListShows": "SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name",
-	"AddShow":   "CM",
+	"ListShows":  "SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name",
+	"AddNewShow": "INSERT INTO shows (name, active) VALUES (:name, :active)",
+	"AddShow":    "INSERT INTO episodes (show, season, episode) VALUES ((SELECT id FROM shows WHERE name = :name), :season, :episode)",
+	"GetShow":    "SELECT name, active FROM shows",
 }
 
 func (db *DBInfo) Init(driver string, config config.Config) error {
@@ -86,7 +88,7 @@ func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (int, 
 	if !exists {
 		sh := Shows{Name: name, Active: true}
 		// We need to create the show first in the show table
-		if _, err := db.Conn.NamedExec("INSERT INTO shows (name, active) VALUES (:name, :active)", sh); err != nil {
+		if _, err := db.Conn.NamedExec(queries["AddNewShow"], sh); err != nil {
 			return added, fmt.Errorf("Error Inserting shows: %s", err)
 		}
 	}
@@ -94,7 +96,7 @@ func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (int, 
 	if one {
 		added = 1
 		sh := Shows{Name: name, Season: season, Episode: episode}
-		if _, err := db.Conn.NamedExec("INSERT INTO episodes (show, season, episode) VALUES ((SELECT id FROM shows WHERE name = :name), :season, :episode)", sh); err != nil {
+		if _, err := db.Conn.NamedExec(queries["AddShow"], sh); err != nil {
 			if err.Error() == "pq: duplicate key value violates unique constraint \"episodes_show_season_episode_key\"" {
 				return 0, nil
 			}
@@ -111,7 +113,7 @@ func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (int, 
 
 		for e := 1; e <= eLimit; e++ {
 			sh := Shows{Name: name, Season: s, Episode: e}
-			if _, err := db.Conn.NamedExec("INSERT INTO episodes (show, season, episode) VALUES ((SELECT id FROM shows WHERE name = :name), :season, :episode)", sh); err != nil {
+			if _, err := db.Conn.NamedExec(queries["AddShow"], sh); err != nil {
 				return added, fmt.Errorf("Error Inserting seasons: %s", err)
 			}
 			added++
@@ -142,7 +144,7 @@ func (db *DBInfo) RemoveShow(name string) (int64, error) {
 
 func (db *DBInfo) GetShow(name string) (bool, error) {
 	shows := []Shows{}
-	if err := db.Conn.Select(&shows, "SELECT name, active FROM shows"); err != nil {
+	if err := db.Conn.Select(&shows, queries["GetShow"]); err != nil {
 		return false, err
 	}
 
