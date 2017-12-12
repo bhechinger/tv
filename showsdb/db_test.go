@@ -26,11 +26,7 @@ func TestDatabase(t *testing.T) {
 				makeQueryStringRegex(test_queries["ListShows"]),
 			).ExpectQuery().WithArgs(true).WillReturnRows(
 				sqlmock.NewRows(
-					[]string{
-						"name",
-						"season",
-						"episode",
-					},
+					[]string{"name", "season", "episode"},
 				).AddRow("Test Show 1", 3, 2).AddRow("Test Show 2", 2, 3))
 
 			shows, err := myDb.ListShows()
@@ -48,13 +44,9 @@ func TestDatabase(t *testing.T) {
 		Convey("Test GetShow() - Show exists", func() {
 			mock.ExpectQuery(
 				makeQueryStringRegex(test_queries["GetShow"]),
-			).WillReturnRows(
-				sqlmock.NewRows(
-					[]string{
-						"name",
-						"active",
-					},
-				).AddRow("Test Show 1", true).AddRow("Test Show 2", true))
+			).WillReturnRows(sqlmock.NewRows(
+				[]string{"name", "active"},
+			).AddRow("Test Show 1", true).AddRow("Test Show 2", true))
 
 			exists, err := myDb.GetShow("Test Show 1")
 			So(err, ShouldBeNil)
@@ -64,13 +56,9 @@ func TestDatabase(t *testing.T) {
 		Convey("Test GetShow() - Show doesn't exist", func() {
 			mock.ExpectQuery(
 				makeQueryStringRegex(test_queries["GetShow"]),
-			).WillReturnRows(
-				sqlmock.NewRows(
-					[]string{
-						"name",
-						"active",
-					},
-				))
+			).WillReturnRows(sqlmock.NewRows(
+				[]string{"name", "active"},
+			))
 
 			exists, err := myDb.GetShow("Test Show 1")
 			So(err, ShouldBeNil)
@@ -80,21 +68,14 @@ func TestDatabase(t *testing.T) {
 		Convey("Test AddShow() - Show exists - one", func() {
 			mock.ExpectQuery(
 				makeQueryStringRegex(test_queries["GetShow"]),
-			).WillReturnRows(
-				sqlmock.NewRows(
-					[]string{
-						"name",
-						"active",
-					},
-				).AddRow("Test Show 1", true).AddRow("Test Show 2", true))
+			).WillReturnRows(sqlmock.NewRows(
+				[]string{"name", "active"},
+			).AddRow("Test Show 1", true).AddRow("Test Show 2", true))
 
 			mock.ExpectExec(
 				makeQueryStringRegex(test_queries["AddShow"]),
-			).WithArgs(
-				"Test Show 2",
-				1,
-				2,
-			).WillReturnResult(sqlmock.NewResult(0, 2))
+			).WithArgs("Test Show 2", 1, 2).WillReturnResult(
+				sqlmock.NewResult(0, 2))
 
 			num_added, err := myDb.AddShow("Test Show 2", 1, 2, true)
 			So(err, ShouldBeNil)
@@ -104,29 +85,19 @@ func TestDatabase(t *testing.T) {
 		Convey("Test AddShow() - Show exists - multi", func() {
 			mock.ExpectQuery(
 				makeQueryStringRegex(test_queries["GetShow"]),
-			).WillReturnRows(
-				sqlmock.NewRows(
-					[]string{
-						"name",
-						"active",
-					},
-				).AddRow("Test Show 1", true).AddRow("Test Show 2", true))
+			).WillReturnRows(sqlmock.NewRows(
+				[]string{"name", "active"},
+			).AddRow("Test Show 1", true).AddRow("Test Show 2", true))
 
 			mock.ExpectExec(
 				makeQueryStringRegex(test_queries["AddShow"]),
-			).WithArgs(
-				"Test Show 2",
-				1,
-				1,
-			).WillReturnResult(sqlmock.NewResult(0, 2))
+			).WithArgs("Test Show 2", 1, 1).WillReturnResult(
+				sqlmock.NewResult(0, 2))
 
 			mock.ExpectExec(
 				makeQueryStringRegex(test_queries["AddShow"]),
-			).WithArgs(
-				"Test Show 2",
-				1,
-				2,
-			).WillReturnResult(sqlmock.NewResult(0, 2))
+			).WithArgs("Test Show 2", 1, 2).WillReturnResult(
+				sqlmock.NewResult(0, 2))
 
 			num_added, err := myDb.AddShow("Test Show 2", 1, 2, false)
 			So(err, ShouldBeNil)
@@ -136,28 +107,19 @@ func TestDatabase(t *testing.T) {
 		Convey("Test AddShow() - Show doesn't exists - one", func() {
 			mock.ExpectQuery(
 				makeQueryStringRegex(test_queries["GetShow"]),
-			).WillReturnRows(
-				sqlmock.NewRows(
-					[]string{
-						"name",
-						"active",
-					},
-				))
+			).WillReturnRows(sqlmock.NewRows(
+				[]string{"name", "active"},
+			))
 
 			mock.ExpectExec(
 				makeQueryStringRegex(test_queries["AddNewShow"]),
-			).WithArgs(
-				"Test Show 2",
-				true,
-			).WillReturnResult(sqlmock.NewResult(0, 1))
+			).WithArgs("Test Show 2", true).WillReturnResult(
+				sqlmock.NewResult(0, 1))
 
 			mock.ExpectExec(
 				makeQueryStringRegex(test_queries["AddShow"]),
-			).WithArgs(
-				"Test Show 2",
-				1,
-				2,
-			).WillReturnResult(sqlmock.NewResult(0, 2))
+			).WithArgs("Test Show 2", 1, 2).WillReturnResult(
+				sqlmock.NewResult(0, 2))
 
 			num_added, err := myDb.AddShow("Test Show 2", 1, 2, true)
 			So(err, ShouldBeNil)
@@ -167,13 +129,9 @@ func TestDatabase(t *testing.T) {
 		Convey("Test AddShow() - Show doesn't exists - multi", func() {
 			mock.ExpectQuery(
 				makeQueryStringRegex(test_queries["GetShow"]),
-			).WillReturnRows(
-				sqlmock.NewRows(
-					[]string{
-						"name",
-						"active",
-					},
-				))
+			).WillReturnRows(sqlmock.NewRows(
+				[]string{"name", "active"},
+			))
 
 			mock.ExpectExec(
 				makeQueryStringRegex(test_queries["AddNewShow"]),
@@ -184,19 +142,13 @@ func TestDatabase(t *testing.T) {
 
 			mock.ExpectExec(
 				makeQueryStringRegex(test_queries["AddShow"]),
-			).WithArgs(
-				"Test Show 2",
-				1,
-				1,
-			).WillReturnResult(sqlmock.NewResult(0, 2))
+			).WithArgs("Test Show 2", 1, 1).WillReturnResult(
+				sqlmock.NewResult(0, 2))
 
 			mock.ExpectExec(
 				makeQueryStringRegex(test_queries["AddShow"]),
-			).WithArgs(
-				"Test Show 2",
-				1,
-				2,
-			).WillReturnResult(sqlmock.NewResult(0, 2))
+			).WithArgs("Test Show 2", 1, 2).WillReturnResult(
+				sqlmock.NewResult(0, 2))
 
 			num_added, err := myDb.AddShow("Test Show 2", 1, 2, false)
 			So(err, ShouldBeNil)
