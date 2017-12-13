@@ -30,14 +30,16 @@ type Shows struct {
 }
 
 var queries = map[string]string{
-	"ListShows":  "SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name",
-	"AddNewShow": "INSERT INTO shows (name, active) VALUES (:name, :active)",
-	"AddShow":    "INSERT INTO episodes (show, season, episode) VALUES ((SELECT id FROM shows WHERE name = :name), :season, :episode)",
-	"GetShow":    "SELECT name, active FROM shows",
+	"ListShows":     "SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name",
+	"AddNewShow":    "INSERT INTO shows (name, active) VALUES (:name, :active)",
+	"AddShow":       "INSERT INTO episodes (show, season, episode) VALUES ((SELECT id FROM shows WHERE name = :name), :season, :episode)",
+	"ShowExists":    "SELECT name, active FROM shows WHERE name = :name",
+	"RemoveEpisode": "DELETE FROM episodes WHERE show = (SELECT id FROM shows WHERE name = :name)",
+	"RemoveShow":    "DELETE FROM shows WHERE name = :name",
 }
 
-func (db *DBInfo) Init(driver string, config config.Config) error {
-	var err error
+func (db *DBInfo) Init(driver string, config config.Config) (err error) {
+	var dbErr error
 	db.Driver = driver
 	db.DSN = fmt.Sprintf("user=%s host=%s port=%s password=%s dbname=%s sslmode=%s",
 		config.Database.User,
@@ -47,60 +49,60 @@ func (db *DBInfo) Init(driver string, config config.Config) error {
 		config.Database.DBName,
 		config.Database.SSLMode)
 
-	if db.Conn, err = sqlx.Open(db.Driver, db.DSN); err != nil {
-		return errors.New("Error opening connection")
+	if db.Conn, err = sqlx.Open(db.Driver, db.DSN); dbErr != nil {
+		return dbErr
 	}
 
 	return nil
 }
 
-func (db *DBInfo) Ping(timeout int) error {
+func (db *DBInfo) Ping(timeout int) (err error) {
 	for try := 0; ; try++ {
 		if try > timeout {
 			return errors.New("Timing out attempting to ping database")
 		}
-		if err := db.Conn.Ping(); err == nil {
+		if pingErr := db.Conn.Ping(); pingErr == nil {
 			return nil
 		}
 		time.Sleep(1 * time.Second)
 	}
 }
 
-func (db *DBInfo) ListShows() ([]Shows, error) {
-	stmt, err := db.Conn.PrepareNamed(queries["ListShows"])
+func (db *DBInfo) ListShows() (showList []Shows, err error) {
+	stmt, dbErr := db.Conn.PrepareNamed(queries["ListShows"])
 	s := Shows{Active: true}
 	shows := []Shows{}
 
-	if err = stmt.Select(&shows, s); err != nil {
-		return shows, fmt.Errorf("Error selecting shows/seasons: %s", err)
+	if dbErr = stmt.Select(&shows, s); dbErr != nil {
+		return shows, fmt.Errorf("Error selecting shows/seasons: %s", dbErr)
 	}
 
 	return shows, nil
 }
 
-func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (int, error) {
+func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (numAdded int, err error) {
 	added := 0
-	exists, err := db.GetShow(name)
-	if err != nil {
-		return added, fmt.Errorf("Error checking if show exists: %s", err)
+	exists, dbErr := db.ShowExists(name)
+	if dbErr != nil {
+		return added, fmt.Errorf("Error checking if show exists: %s", dbErr)
 	}
 
 	if !exists {
 		sh := Shows{Name: name, Active: true}
 		// We need to create the show first in the show table
-		if _, err := db.Conn.NamedExec(queries["AddNewShow"], sh); err != nil {
-			return added, fmt.Errorf("Error Inserting shows: %s", err)
+		if _, dbErr := db.Conn.NamedExec(queries["AddNewShow"], sh); dbErr != nil {
+			return added, fmt.Errorf("Error Inserting shows: %s", dbErr)
 		}
 	}
 
 	if one {
 		added = 1
 		sh := Shows{Name: name, Season: season, Episode: episode}
-		if _, err := db.Conn.NamedExec(queries["AddShow"], sh); err != nil {
-			if err.Error() == "pq: duplicate key value violates unique constraint \"episodes_show_season_episode_key\"" {
+		if _, dbErr := db.Conn.NamedExec(queries["AddShow"], sh); dbErr != nil {
+			if dbErr.Error() == "pq: duplicate key value violates unique constraint \"episodes_show_season_episode_key\"" {
 				return 0, nil
 			}
-			return 0, fmt.Errorf("Error Inserting episode: %s", err)
+			return 0, fmt.Errorf("Error Inserting episode: %s", dbErr)
 		}
 		return 1, nil
 	}
@@ -113,8 +115,8 @@ func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (int, 
 
 		for e := 1; e <= eLimit; e++ {
 			sh := Shows{Name: name, Season: s, Episode: e}
-			if _, err := db.Conn.NamedExec(queries["AddShow"], sh); err != nil {
-				return added, fmt.Errorf("Error Inserting seasons: %s", err)
+			if _, dbErr := db.Conn.NamedExec(queries["AddShow"], sh); dbErr != nil {
+				return added, fmt.Errorf("Error Inserting seasons: %s", dbErr)
 			}
 			added++
 		}
@@ -123,36 +125,37 @@ func (db *DBInfo) AddShow(name string, season int, episode int, one bool) (int, 
 	return added, nil
 }
 
-func (db *DBInfo) RemoveShow(name string) (int64, error) {
+func (db *DBInfo) RemoveShow(name string) (numRemoved int64, err error) {
 	s := Shows{Name: name}
-	result, err := db.Conn.NamedExec("DELETE FROM episodes WHERE show = (SELECT id FROM shows WHERE name = :name)", s)
-	if err != nil {
-		return 0, fmt.Errorf("Error deleting shows from episide table: %s", err)
+	result, dbErr := db.Conn.NamedExec(queries["RemoveEpisode"], s)
+	if dbErr != nil {
+		return 0, fmt.Errorf("Error deleting shows from episide table: %s", dbErr)
 	}
 
-	episodesDeleted, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("Error getting RowsAffected(): %s", err)
+	episodesDeleted, dbErr := result.RowsAffected()
+	if dbErr != nil {
+		return 0, fmt.Errorf("Error getting RowsAffected(): %s", dbErr)
 	}
 
-	if _, err := db.Conn.NamedExec("DELETE FROM shows WHERE name = :name", s); err != nil {
-		return 0, fmt.Errorf("Error deleting shows from shows table: %s", err)
+	if _, dbErr := db.Conn.NamedExec(queries["RemoveShow"], s); dbErr != nil {
+		return 0, fmt.Errorf("Error deleting shows from shows table: %s", dbErr)
 	}
 
 	return episodesDeleted, nil
 }
 
-func (db *DBInfo) GetShow(name string) (bool, error) {
+func (db *DBInfo) ShowExists(name string) (exists bool, err error) {
+	stmt, dbErr := db.Conn.PrepareNamed(queries["ShowExists"])
+	s := Shows{Name: name}
 	shows := []Shows{}
-	if err := db.Conn.Select(&shows, queries["GetShow"]); err != nil {
-		return false, err
+
+	if dbErr = stmt.Select(&shows, s); dbErr != nil {
+		return false, fmt.Errorf("Error checking if the show exists: %s", dbErr)
 	}
 
-	for _, v := range shows {
-		if name == v.Name {
-			return true, nil
-		}
+	if len(shows) == 0 {
+		return false, nil
 	}
 
-	return false, nil
+	return true, nil
 }

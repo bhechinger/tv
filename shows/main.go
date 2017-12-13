@@ -94,15 +94,15 @@ func main() {
 	}
 
 	if getCommand.Parsed() {
-		exists, err := mydb.GetShow(*getName)
+		exists, err := mydb.ShowExists(*getName)
 		if err != nil {
 			fmt.Printf("Something went wrong Getting Show: %s\n", err)
 			os.Exit(0)
 		}
 		if exists {
-			fmt.Printf("%s exists in the database", *getName)
+			fmt.Printf("%s exists in the database\n", *getName)
 		} else {
-			fmt.Printf("%s does not exist in the database", *getName)
+			fmt.Printf("%s does not exist in the database\n", *getName)
 		}
 
 	}
