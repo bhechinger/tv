@@ -112,6 +112,11 @@ func TestDatabase(t *testing.T) {
 			exists, err := myDb.ShowExists("Test Show 1")
 			So(err, ShouldBeNil)
 			So(exists, ShouldBeTrue)
+
+			//noDb := &DBInfo{}
+			//noExists, noErr := noDb.ShowExists("Test Show 1")
+			//So(noErr, ShouldBeNil)
+			//So(noExists, ShouldBeNil)
 		})
 
 		Convey("Test ShowExists() - Show doesn't exist", func() {

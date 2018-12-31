@@ -34,6 +34,11 @@ func main() {
 	removeName := removeCommand.String("name", "", "Show to remvoe")
 
 	// TODO: error handling for no command line arguments
+	if len(os.Args) == 1 {
+		fmt.Printf("Args required\n")
+		os.Exit(1)
+	}
+
 	switch os.Args[1] {
 	case "list":
 		listCommand.Parse(os.Args[2:])

@@ -93,7 +93,7 @@ func main() {
 				in, err := os.Open(srcname)
 				if err != nil {
 					log.Printf("os.Open(): %v", err)
-					os.Exit(1)
+					os.Exit(5)
 				}
 				defer in.Close()
 
@@ -102,19 +102,19 @@ func main() {
 				out, err := os.Create(destFile)
 				if err != nil {
 					log.Printf("os.Create(): %v", err)
-					os.Exit(1)
+					os.Exit(6)
 				}
 				defer out.Close()
 
 				_, err = io.Copy(out, in)
 				if err != nil {
 					log.Printf("os.Copy(): %v", err)
-					os.Exit(1)
+					os.Exit(7)
 				}
 
 				if err := os.Chmod(destFile, 0644); err != nil {
 					log.Printf("os.Chmod(): %v", err)
-					os.Exit(1)
+					os.Exit(8)
 				}
 
 				msg := fmt.Sprintf("copying '%+v' to '%s'\n", srcname, destDir)
@@ -136,7 +136,7 @@ func getGlob(ext string) []string {
 
 	if err != nil {
 		log.Printf("filepath.Glob(): %v", err)
-		os.Exit(1)
+		os.Exit(9)
 	}
 
 	return globOutput

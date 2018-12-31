@@ -88,7 +88,11 @@ func main() {
 	}
 
 	var q Query
-	xml.Unmarshal(body, &q)
+	err = xml.Unmarshal(body, &q)
+	if err != nil {
+		log.Printf("Something has gone terribly wrong unmarshalling the XML: %s\n", err)
+		os.Exit(2)
+	}
 
 	client := transmission.New(conf.Transmission.URI, conf.Transmission.Username, conf.Transmission.Password)
 
@@ -147,4 +151,6 @@ func main() {
 			}
 		}
 	}
+
+	log.Println("Finished running rss_feed")
 }

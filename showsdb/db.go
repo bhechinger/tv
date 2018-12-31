@@ -30,7 +30,7 @@ type Shows struct {
 }
 
 var queries = map[string]string{
-	"ListShows":     "SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name",
+	"ListShows":     "SELECT shows.name, MAX(episodes.season) as season, MAX(episodes.episode) as episode FROM episodes LEFT JOIN shows ON (episodes.show = shows.id) WHERE shows.active = :active AND episodes.season = (select MAX(season) from episodes ep1 where ep1.show = shows.id) GROUP BY shows.name ORDER BY shows.name",
 	"AddNewShow":    "INSERT INTO shows (name, active) VALUES (:name, :active)",
 	"AddShow":       "INSERT INTO episodes (show, season, episode) VALUES ((SELECT id FROM shows WHERE name = :name), :season, :episode)",
 	"ShowExists":    "SELECT name, active FROM shows WHERE name = :name",
