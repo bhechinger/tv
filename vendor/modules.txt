@@ -1,0 +1,15 @@
+# github.com/BurntSushi/toml v0.3.1
+github.com/BurntSushi/toml
+# github.com/jmoiron/sqlx v1.2.0
+github.com/jmoiron/sqlx
+github.com/jmoiron/sqlx/reflectx
+# github.com/lib/pq v1.2.0
+github.com/lib/pq
+github.com/lib/pq/oid
+github.com/lib/pq/scram
+# github.com/tubbebubbe/transmission v0.0.0-20170711213924-fa5f39e4eddd
+github.com/tubbebubbe/transmission
+# gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
+gopkg.in/alexcesaro/quotedprintable.v3
+# gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+gopkg.in/gomail.v2
